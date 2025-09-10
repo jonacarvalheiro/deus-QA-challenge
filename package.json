@@ -6,7 +6,11 @@
   "scripts": {
     "selenium:test": "node selenium/test.js",
     "selenium:debug": "node --inspect-brk selenium/test.js",
-    "selenium:debug-chrome": "node --inspect selenium/test.js"
+    "selenium:debug-chrome": "node --inspect selenium/test.js",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "cypress:test": "cypress run --spec cypress/e2e/booking-test.cy.js",
+    "cypress:test-headed": "cypress run --spec cypress/e2e/booking-test.cy.js --headed"
   },
   "keywords": ["automation", "testing", "selenium", "booking"],
   "author": "Jonathan Mendes Carvalheiro",

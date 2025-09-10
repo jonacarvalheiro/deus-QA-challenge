@@ -20,7 +20,7 @@ class HomePage extends BasePage {
     console.log(`Entering destination: ${destination}`)
     
     
-    // Use the wrapper method to send keys
+    // Type destination using wrapper method
     await this.sendKeysToElement(this.selectors.destinationInput, destination)
     await this.driver.sleep(3000) // Wait for autocomplete
     return this
@@ -28,7 +28,7 @@ class HomePage extends BasePage {
 
   async selectPortoSuggestion() {
     try {
-      // Find the specific Porto, Portugal suggestion using wrapper
+      // Look for Porto, Portugal in the suggestions
       await this.clickElement(
         By.xpath("//li[.//div[contains(text(), 'Porto')] and .//div[contains(text(), 'Portugal')]]"),
         5000

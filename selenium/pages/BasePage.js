@@ -6,7 +6,7 @@ class BasePage {
     this.baseUrl = 'https://www.booking.com'
   }
 
-  // Wrapper for findElement with proper waiting
+  // Find element and wait for it
   async findElement(selector, timeout = 10000) {
     try {
       const element = await this.driver.wait(
@@ -19,7 +19,7 @@ class BasePage {
     }
   }
 
-  // Wrapper for findElements with proper waiting
+  // Find multiple elements and wait
   async findElements(selector, timeout = 10000, wait=true) {
     if(!wait){
       return await this.driver.findElements(selector)
@@ -38,7 +38,7 @@ class BasePage {
 
 
 
-  // Wait for element to be visible and clickable, then click
+  // Click element after making sure it's ready
   async clickElement(selector, timeout = 10000) {
     try {
       // Check if Genius modal exists and close it if present
@@ -62,7 +62,7 @@ class BasePage {
     }
   }
 
-  // Wait for element to be visible, then send keys
+  // Type text into element
   async sendKeysToElement(selector, text, timeout = 10000) {
     try {
       // Check if Genius modal exists and close it if present
@@ -114,18 +114,28 @@ class BasePage {
 
   // Check if Genius modal exists and close it if present
   async closeGeniusModalIfPresent() {
-    // Check if the modal exists by counting elements
-    const geniusModalCloseButton = By.css('button[aria-label="Dismiss sign in information."]')
-    const modalButtons = await this.driver.findElements(geniusModalCloseButton,0,false)
+    // Check if the modal exists by counting elements - support both English and Portuguese
+    const englishSelector = By.css('button[aria-label="Dismiss sign in information."]')
+    const portugueseSelector = By.css('button[aria-label="Ignorar informação sobre iniciar sessão."]')
     
-    // If count is 0, modal doesn't exist - move forward
-    if (modalButtons.length === 0) {
+    const englishButtons = await this.driver.findElements(englishSelector, 0, false)
+    const portugueseButtons = await this.driver.findElements(portugueseSelector, 0, false)
+    
+    // If count is 0 for both, modal doesn't exist - move forward
+    if (englishButtons.length === 0 && portugueseButtons.length === 0) {
       return // No modal found, continue normally
     }
     
     // If count > 0, modal exists - close it
     try {
-      const closeButton = modalButtons[0] // Get the first (and should be only) button
+      let closeButton
+      if (englishButtons.length > 0) {
+        closeButton = englishButtons[0]
+        console.log('Found English Genius modal')
+      } else {
+        closeButton = portugueseButtons[0]
+        console.log('Found Portuguese Genius modal')
+      }
       
       // Wait for button to be visible and clickable
       await this.driver.wait(until.elementIsVisible(closeButton), 2000)
@@ -146,14 +156,26 @@ class BasePage {
   // Fail-safe method to close Genius modal if it appears (legacy method)
   async closeGeniusModal() {
     try {
-      // Try to find and close the Genius modal using the dismiss button
-      const geniusModalCloseButton = By.css('button[aria-label="Dismiss sign in information."]')
+      // Try to find and close the Genius modal using the dismiss button - support both languages
+      const englishSelector = By.css('button[aria-label="Dismiss sign in information."]')
+      const portugueseSelector = By.css('button[aria-label="Ignorar informação sobre iniciar sessão."]')
       
-      // Wait for the modal to appear (short timeout)
-      const closeButton = await this.driver.wait(
-        until.elementLocated(geniusModalCloseButton),
-        3000
-      )
+      let closeButton
+      try {
+        // Try English first
+        closeButton = await this.driver.wait(
+          until.elementLocated(englishSelector),
+          3000
+        )
+        console.log('Found English Genius modal (legacy)')
+      } catch (e) {
+        // Try Portuguese
+        closeButton = await this.driver.wait(
+          until.elementLocated(portugueseSelector),
+          3000
+        )
+        console.log('Found Portuguese Genius modal (legacy)')
+      }
       
       // Wait for button to be visible and clickable
       await this.driver.wait(until.elementIsVisible(closeButton), 2000)
