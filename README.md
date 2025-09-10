@@ -1,49 +1,64 @@
-# Booking.com Selenium Automation
+# Booking.com Test Automation - Selenium & Cypress
 
 ## Overview
 
-This project provides a robust set of Selenium WebDriver automated tests for the Booking.com website, implemented using JavaScript and the Page Object Model (POM) design pattern. The tests are designed to simulate user interactions, such as searching for hotels, handling dynamic pop-ups (like cookie consent and Genius modals), and extracting information from search results. The focus is on creating stable, maintainable, and reliable automation scripts.
+This project contains automated tests for Booking.com built with both **Selenium WebDriver** and **Cypress**. I wrote both versions in JavaScript using the Page Object Model pattern to show how the same test can work across different frameworks. Both tests do exactly the same thing: search for hotels in Porto, deal with those annoying cookie popups and Genius modals, and pull out the property information from the results.
 
 ## Decisions Taken
 
 Here are the key decisions and approaches taken during the development of this automation suite:
 
-### **Why Selenium?**
-The choice to use Selenium WebDriver was primarily driven by extensive prior experience with the framework. This allowed for a quicker setup and focused effort on implementing robust test logic, leveraging existing knowledge to address automation challenges efficiently.
+### **Why Both Selenium and Cypress?**
+I wanted to show how the same test logic works in both frameworks because:
+- **Compare approaches**: See how each framework handles the same scenario differently
+- **Learn both tools**: Get hands-on experience with different automation styles
+- **Popup handling**: Each framework deals with those pesky cookie and modal popups in its own way
+- **Reliability**: Selenium makes you manage waits explicitly, while Cypress handles retries automatically
 
 ### **Why JavaScript?**
-JavaScript was selected as the programming language for this project to provide an opportunity for practice and to enhance proficiency in a language where I'm not as comfortable as with Java or C#. This choice aimed to improve JavaScript skills while building a functional automation suite. It's important to note that Selenium WebDriver operations are inherently asynchronous, involving network calls to the browser, and all WebDriver methods return Promises. Therefore, `async/await` is essential for writing clean, readable, and maintainable test code, avoiding complex `.then()` chains.
+I chose JavaScript because I wanted to practice it more - I'm more comfortable with Java and C#, so this was a good chance to get better at JS while building something useful. Since Selenium WebDriver calls are all asynchronous (they're making network calls to the browser), everything returns Promises. Using `async/await` keeps the code much cleaner than chaining a bunch of `.then()` calls everywhere.
 
 ### **Page Object Model (POM)**
-The Page Object Model (POM) design pattern was adopted to make the codebase simpler and more reusable. By encapsulating elements and interactions specific to each page within dedicated page classes (e.g., `HomePage`, `SearchResultsPage`), the tests become more organized, easier to understand, and less prone to breaking changes when UI elements are modified. This separation of concerns makes the test suite scalable and easier to manage.
+I used the Page Object Model because it keeps things organized. Instead of having element selectors scattered everywhere, each page gets its own class (`HomePage`, `SearchResultsPage`, etc.) with all its elements and actions in one place. This way, if Booking.com changes their UI, I only need to update the page class instead of hunting through all the test files.
 
-### **Robust Element Interaction (Wrappers & Waits)**
-To ensure test stability and reliability, a set of wrapper methods was implemented in the `BasePage`. These wrappers abstract away common Selenium interactions (like `findElement`, `clickElement`, `sendKeysToElement`) and incorporate explicit waits. This ensures that elements are not only present in the DOM but also visible and clickable before any interaction, significantly reducing flaky tests caused by timing issues.
+### **Element Interaction (Wrappers & Waits)**
+I created wrapper methods in `BasePage` to make element interactions more reliable. Instead of calling Selenium methods directly, these wrappers add proper waiting - making sure elements are not just there, but actually visible and clickable before trying to interact with them. This cuts down on those frustrating flaky tests that fail randomly because of timing issues.
 
-**Genius Modal Handling**: A dynamic and efficient fail-safe mechanism was implemented to handle the "Genius modal" pop-up. Instead of relying on `try-catch` blocks, the system now proactively checks for the modal's existence by counting elements. If the modal is present, it is gracefully dismissed before proceeding with other interactions, ensuring uninterrupted test flow. This check is integrated into core interaction methods like `clickElement` and `sendKeysToElement` for comprehensive coverage.
+**Genius Modal Handling**: Instead of using try-catch everywhere and hoping for the best, I check if that annoying Genius modal is actually there before trying to close it. The code counts how many modal close buttons exist - if there's one, it clicks it and moves on. This check happens before every click or type action so the modal never gets in the way.
 
-**Cookie Acceptance Logic**: A comprehensive cookie acceptance mechanism was developed. It first attempts to find and click the primary cookie acceptance button, waiting for it to be located, visible, and clickable. If the primary button is not found, it gracefully falls back to an alternative selector. This ensures that the test can proceed regardless of the specific cookie banner implementation.
+**Cookie Acceptance**: The cookie handling tries the main "Accept" button first, and if that doesn't work, it falls back to alternative selectors. This way the test works regardless of which cookie banner Booking.com decides to show.
 
 ### **Selector Strategy**
-Wherever possible, `data-testid` attributes provided by the Booking.com website were prioritized for element selection. These attributes are generally more stable and less likely to change than CSS classes or other dynamic attributes, leading to more resilient selectors. When `data-testid` was not available or insufficient, more robust XPath selectors were crafted to target specific elements, such as the "Porto, Portugal" suggestion in the autocomplete dropdown or the "Next month" button using its `aria-label`.
+I used `data-testid` attributes whenever possible since they're more stable than CSS classes that might change when designers update the site. When those weren't available, I used XPath or aria-labels to find specific elements like the "Porto, Portugal" option in the dropdown or the "Next month" calendar button.
 
 ### **Clean Test Environment**
-To guarantee consistent test results and prevent interference from previous runs, a robust cache and cookie clearing mechanism was implemented. Each test execution now starts with a clean browser state. For debugging purposes, unique user data directories and remote debugging ports are generated for each run, preventing conflicts and allowing for simultaneous debugging sessions.
+Each test starts fresh by clearing all cookies and cache so previous runs don't mess with the current one. For debugging, each run gets its own temp directory and debug port so you can run multiple tests at the same time without them stepping on each other.
 
-### **Robust Data Extraction**
-The method for extracting property names from search results was enhanced with retry logic. This ensures that if initial attempts to retrieve all property names yield incomplete or empty results (due to potential loading delays), the operation is retried after a short delay until all expected data is successfully extracted. This makes the data extraction process more reliable and resilient to dynamic content loading.
+### **Data Extraction**
+Getting property names from the results page sometimes fails on the first try because the page is still loading. So I added retry logic - if it doesn't get all the property names on the first attempt, it waits a bit and tries again until it gets everything.
 
 ## Project Structure
 
 ```
 deus-QA-challenge/
-├── selenium/
+├── selenium/                    # Selenium WebDriver Implementation
 │   ├── pages/
 │   │   ├── BasePage.js          # Base page with common functionality and wrappers
 │   │   ├── HomePage.js          # Home page interactions and search functionality
 │   │   └── SearchResultsPage.js # Search results page and data extraction
-│   └── test.js              # Main test file using Page Object Model
-├── package.json                 # Project dependencies and scripts
+│   └── test.js                  # Main Selenium test file using Page Object Model
+├── cypress/                     # Cypress Implementation (Identical Logic)
+│   ├── pages/
+│   │   ├── BasePage.js          # Base page with Cypress-specific wrappers
+│   │   ├── HomePage.js          # Home page interactions (same logic as Selenium)
+│   │   └── SearchResultsPage.js # Search results (same logic as Selenium)
+│   ├── e2e/
+│   │   └── booking-test.cy.js   # Main Cypress test file
+│   └── support/
+│       ├── commands.js          # Custom Cypress commands
+│       └── e2e.js               # Global Cypress configuration
+├── cypress.config.js            # Cypress configuration file
+├── package.json                 # Project dependencies and scripts (both frameworks)
 └── README.md                    # This documentation
 ```
 
@@ -71,15 +86,39 @@ Before running the tests, ensure you have the following installed:
 
 ## How to Run Tests
 
-### Running the Main Test
+### Selenium Tests
 
-To execute the primary Page Object Model test suite:
+To execute the Selenium Page Object Model test suite:
 
+```bash
+npm run selenium:test
+```
+
+Alternative direct execution:
 ```bash
 node selenium/test.js
 ```
 
-This command will:
+### Cypress Tests
+
+To execute the Cypress test suite:
+
+**Headless execution:**
+```bash
+npm run cypress:test
+```
+
+**With visible browser:**
+```bash
+npm run cypress:test-headed
+```
+
+**Interactive Test Runner:**
+```bash
+npm run cypress:open
+```
+
+Both implementations will:
 - Launch a Chrome browser
 - Navigate to Booking.com
 - Clear cookies and cache for a clean start
@@ -88,52 +127,82 @@ This command will:
 - Extract and display property information
 - Print results to the console
 
-### Running Tests with Debugging
+### Debugging Tests
 
-To run the tests with the Node.js debugger attached, allowing you to set breakpoints and step through the code:
+#### Selenium Debugging
 
-1. **Start the debug script from your terminal:**
+To run Selenium tests with Node.js debugger attached:
+
+1. **Start the debug script:**
    ```bash
    npm run selenium:debug
    ```
-   This command will start the test in debug mode and open a Chrome browser instance. The browser will pause at the first line of code or at any `debugger;` statements you've placed in the code.
 
-2. **Attach your IDE's debugger:**
-   - **VS Code**: Go to the "Run and Debug" view (Ctrl+Shift+D or Cmd+Shift+D). Select "Attach to Node.js Process" or ensure your debugger automatically attaches to the specified remote debugging port.
-   - **Chrome DevTools**: Open `chrome://inspect` in your browser and click "Open dedicated DevTools for Node" when the process appears.
+2. **Alternative debug mode:**
+   ```bash
+   npm run selenium:debug-chrome
+   ```
 
-3. **Control execution:**
-   You can then use the debugger controls (step over, step into, continue, etc.) to navigate through your test execution, inspect variables, and understand the flow.
+3. **Attach your IDE's debugger:**
+   - **VS Code**: Go to "Run and Debug" view (Ctrl+Shift+D)
+   - **Chrome DevTools**: Open `chrome://inspect` and connect to Node process
 
-### Alternative Debug Commands
+#### Cypress Debugging
 
-- **Non-breaking debug mode:**
-  ```bash
-  npm run selenium:debug-chrome
-  ```
-  This starts the debugger without breaking at the first line, allowing the test to run normally while still providing debugging capabilities.
+Cypress provides built-in debugging capabilities:
+
+1. **Interactive debugging:**
+   ```bash
+   npm run cypress:open
+   ```
+   - Real-time browser interaction
+   - Command execution step-by-step
+   - DOM inspection and element highlighting
+
+2. **Browser DevTools:**
+   - Right-click and "Inspect" during test execution
+   - Use `cy.debug()` commands in test code
+   - Browser console shows detailed command logs
 
 ## Test Features
 
+Both Selenium and Cypress implementations include identical functionality:
+
 ### **Automated Popup Handling**
 - **Cookie Consent**: Automatically accepts cookies using multiple fallback selectors
-- **Genius Modal**: Dynamically detects and dismisses promotional modals
+- **Genius Modal**: Dynamically detects and dismisses promotional modals (English/Portuguese)
 - **Clean State**: Each test starts with cleared cache and cookies
+- **Proactive Detection**: Checks for popups before every interaction (Cypress) vs reactive handling (Selenium)
 
 ### **Robust Element Interaction**
 - **Explicit Waits**: All interactions wait for elements to be visible and clickable
 - **Multiple Selectors**: Fallback strategies for different UI variations
 - **Error Handling**: Graceful degradation when elements are not found
+- **Force Interactions**: Cypress uses force clicks/typing to bypass overlays when needed
 
 ### **Data Extraction**
 - **Retry Logic**: Automatically retries data extraction if incomplete
 - **Multiple Selectors**: Tries various selectors to find property names
 - **Complete Validation**: Ensures all expected data is extracted before proceeding
+- **Identical Output**: Both frameworks produce the same property lists and verification results
 
 ### **Search Functionality**
 - **Destination Selection**: Specifically targets "Porto, Portugal" from autocomplete
-- **Date Selection**: Navigates calendar and selects specific dates
+- **Date Selection**: Navigates calendar and selects next month (1st to 7th)
 - **Results Verification**: Validates search parameters and extracts property information
+
+### **Framework-Specific Features**
+
+#### Selenium Advantages
+- **Fine-grained Control**: Direct WebDriver control over browser actions
+- **Cross-browser Support**: Extensive browser compatibility
+- **Custom Wait Conditions**: Flexible explicit wait implementations
+
+#### Cypress Advantages
+- **Built-in Retry Logic**: Automatic command retries and smart waiting
+- **Real-time Debugging**: Live browser interaction during test execution
+- **Simpler Syntax**: More intuitive API for web automation
+- **Automatic Screenshots**: Built-in failure capture and reporting
 
 ## Troubleshooting
 
@@ -146,8 +215,15 @@ To run the tests with the Node.js debugger attached, allowing you to set breakpo
 
 ## Dependencies
 
+### Selenium Dependencies
 - **selenium-webdriver**: ^4.15.0 - Core Selenium WebDriver functionality
 - **chromedriver**: ^140.0.0 - Chrome browser driver for Selenium
+
+### Cypress Dependencies
+- **cypress**: ^14.5.4 - Cypress testing framework with built-in browser automation
+
+### Shared Dependencies
+- **Node.js**: LTS version recommended for both frameworks
 
 ## Future Improvements
 
